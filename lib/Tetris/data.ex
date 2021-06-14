@@ -1,21 +1,15 @@
 defmodule Tetris.Game do
-  defstruct [grid: %{}, height_per_col: %{}, grid_col_max: 9, grid_row_max: 0, place_shape_row: 0]
+  @grid_col_max 9
+  defstruct [grid: %{}, grid_col_max: @grid_col_max, grid_row_max: 0, height_per_col: %{}, place_shape_row: 0, rows_removed: 0]
+
+  def new_game() do
+    %Tetris.Game{height_per_col: Enum.reduce(0..@grid_col_max,%{},&(Map.put(&2, &1, 0)))}
+  end
 end
 
 defmodule Tetris.Shape do
   @moduledoc """
   """
-  @type shape_offset :: %{shape :: String.t() => [first_block_offset :: integer]}
-  @shape_offsets %{
-    "Q" => [0, 0],
-    "Z" => [1, 0, 0],
-    "S" => [0, 0, 1],
-    "T" => [1, 0, 1],
-    "I" => [0, 0, 0, 0],
-    "L" => [0, 0],
-    "J" => [0, 0]
-  }
-
   @shape_coordinates %{
     "Q" => [
       [true, true],
@@ -48,11 +42,23 @@ defmodule Tetris.Shape do
     ],
   }
 
-  defstruct [:coordinates, :offsets, :height, :width]
+  @type shape_offset :: %{shape :: String.t() => [first_block_offset :: integer]}
+  @shape_offsets %{
+    "Q" => [0, 0],
+    "Z" => [1, 0, 0],
+    "S" => [0, 0, 1],
+    "T" => [1, 0, 1],
+    "I" => [0, 0, 0, 0],
+    "L" => [0, 0],
+    "J" => [0, 0]
+  }
+
+  defstruct [:shape, :coordinates, :offsets, :height, :width]
 
   @spec new(shape :: String.t()) :: struct
   def new(shape) do
     %Tetris.Shape{
+      shape: shape,
       coordinates: @shape_coordinates[shape],
       offsets: @shape_offsets[shape],
       height: length(@shape_coordinates[shape]),
