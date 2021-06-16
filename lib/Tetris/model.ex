@@ -1,9 +1,14 @@
 defmodule Tetris.Game do
   @grid_col_max 9
-  defstruct [grid: %{}, grid_col_max: @grid_col_max, grid_row_max: 0, height_per_col: %{}, place_shape_row: 0, rows_removed: 0]
+  defstruct grid: %{},
+            grid_col_max: @grid_col_max,
+            grid_row_max: 0,
+            height_per_col: %{},
+            place_shape_row: 0,
+            rows_removed: 0
 
   def new_game() do
-    %Tetris.Game{height_per_col: Enum.reduce(0..@grid_col_max,%{},&(Map.put(&2, &1, 0)))}
+    %Tetris.Game{height_per_col: Enum.reduce(0..@grid_col_max, %{}, &Map.put(&2, &1, 0))}
   end
 end
 
@@ -39,10 +44,12 @@ defmodule Tetris.Shape do
       [false, true],
       [false, true],
       [true, true]
-    ],
+    ]
   }
 
-  @type shape_offset :: %{shape :: String.t() => [first_block_offset :: integer]}
+  # first_block_offset represents the row in which the first block for the column corresponding to the position in the
+  # list will appear
+  @type shape_offset :: %{(shape :: String.t()) => [first_block_offset :: integer]}
   @shape_offsets %{
     "Q" => [0, 0],
     "Z" => [1, 0, 0],
@@ -62,8 +69,9 @@ defmodule Tetris.Shape do
       coordinates: @shape_coordinates[shape],
       offsets: @shape_offsets[shape],
       height: length(@shape_coordinates[shape]),
-      width: List.first(@shape_coordinates[shape])
-             |> length()
+      width:
+        List.first(@shape_coordinates[shape])
+        |> length()
     }
   end
 end

@@ -1,49 +1,54 @@
 defmodule Tetris.Main do
   @moduledoc """
-  Documentation for `Tetris`.
+  Main module for the DRW Tetris coding challenge. This module contains the algorithm and is also
+  used to create the escript that enables the program to be run from the command line.
   """
 
   @doc """
-  Hello world.
-
-  ## Examples
-
-      iex> Tetris.hello()
-      :world
-
+  Used as an entry point for the escript.
   """
   def main(_args) do
     IO.stream(:stdio, :line)
     |> Stream.map(&String.trim/1)
     |> Stream.map(&String.split(&1, ","))
     |> Stream.map(&run_game/1)
+    |> Stream.map(&(&1.grid_row_max + 1))
     |> Enum.map(&IO.puts/1)
   end
 
+  @doc """
+  Runs the tetris game for a list of strings which specify the shape and column.
+  The output is the Tetris.Game struct with the value that we're most interested in being the :grid_row_max field.
+  Note that this values starts from 0.
+
+  ## Examples
+      iex> game = Tetris.Main.run_game(["Q0"])
+      iex> game.grid_row_max === 1
+
+      iex> game = Tetris.Main.run_game(["Q0", "Q1"])
+      iex> game.grid_row_max === 3
+  """
   def run_game(entries) do
     shapes = Enum.map(entries, &parse_entry/1)
-    grid_row_max = process_shapes(Tetris.Game.new_game, shapes) |> Map.get(:grid_row_max)
-    grid_row_max + 1
+    process_shapes(Tetris.Game.new_game(), shapes)
+  end
+
+  def process_shapes(game, []) do
+    game
+  end
+
+  def process_shapes(game, [shape_and_col | rem_shapes]) do
+    game
+    |> find_row_to_place_shape(shape_and_col)
+    |> place_shape(shape_and_col)
+    |> remove_completed_rows()
+    |> process_shapes(rem_shapes)
   end
 
   defp parse_entry(entry) do
     # Allows for easy extension of max col size
     {shape, col} = String.next_codepoint(entry)
     {Tetris.Shape.new(shape), String.to_integer(col)}
-  end
-
-  defp process_shapes(game, []) do
-    game
-  end
-
-  defp process_shapes(game, [shape_and_col | rem_shapes]) do
-    game
-    |> find_row_to_place_shape(shape_and_col)
-    |> place_shape(shape_and_col)
-    |> remove_completed_rows()
-    #|> IO.inspect()
-    #|> print_grid()
-    |> process_shapes(rem_shapes)
   end
 
   defp find_row_to_place_shape(game, {shape, grid_x}) do
@@ -59,7 +64,7 @@ defmodule Tetris.Main do
 
   defp find_lock_row_per_col(game, grid_x, {offset_y, shape_x}) do
     # TODO implement cache of height per column
-    grid_y_start = max(game.height_per_col[grid_x + shape_x]-1,0)
+    grid_y_start = max((game.height_per_col[grid_x + shape_x] || 0) - 1, 0)
     grid_y_min = grid_y_start + offset_y
     grid_y_max = max(game.grid_row_max + 1, grid_y_min)
 
@@ -76,18 +81,16 @@ defmodule Tetris.Main do
     place_shape_y = game.place_shape_row
     grid_row_max_for_shape = place_shape_y + shape.height - 1
 
-    Enum.with_index(grid_x..(grid_x + shape.width  - 1))
+    Enum.with_index(grid_x..(grid_x + shape.width - 1))
     |> Enum.reduce(game, fn {x, shape_x}, game ->
       Enum.with_index(place_shape_y..grid_row_max_for_shape)
       |> Enum.reduce(game, fn {y, shape_y}, game ->
         shape_block? = Enum.reverse(shape.coordinates) |> Enum.at(shape_y) |> Enum.at(shape_x)
 
         if shape_block? do
-          %{
-            game
-            | grid: Map.put(game.grid, {x, y}, true),
-              height_per_col: Map.put(game.height_per_col, x, y + 1)
-          }
+          grid = Map.put(game.grid, {x, y}, true)
+          height_per_col = Map.put(game.height_per_col, x, y + 1)
+          %{game | grid: grid, height_per_col: height_per_col}
         else
           game
         end
@@ -144,14 +147,4 @@ defmodule Tetris.Main do
     |> Map.put(:grid_row_max, game.grid_row_max - rows_removed)
   end
 
-  defp print_grid(game) do
-    for y <- game.grid_row_max..0 do
-      for x <- 0..game.grid_col_max do
-        (game.grid[{x, y}] && 1) || 0
-      end
-      |> IO.inspect()
-    end
-    IO.puts("\n")
-    game
-  end
 end
