@@ -23,6 +23,7 @@ defmodule Tetris.MainTest do
     run_game_test(["S0", "S2", "S4", "S5", "Q8", "Q8", "Q8", "Q8", "T1", "Q1", "I0", "Q4"], 7)
     run_game_test(["L0", "J3", "L5", "J8", "T1", "T6", "S2", "Z5", "T0", "T7"], -1)
     run_game_test(["Q0", "I2", "I6", "I0", "I6", "I6", "Q2", "Q4"], 2)
+    run_game_test(["Q6","Z0","I2","Z4","I6","Z0","Q2","L5","J8","T2","L4","L7","Q0","I2","I6","L0","I4"], 9)
   end
 
   test "running games with random inputs" do

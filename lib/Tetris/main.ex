@@ -58,7 +58,7 @@ defmodule Tetris.Main do
         find_lock_row_per_col(game, grid_x, {offset_y, shape_x})
       end)
       |> Enum.max()
-
+      
     %{game | place_shape_row: place_shape_y}
   end
 
@@ -138,7 +138,7 @@ defmodule Tetris.Main do
 
   defp clear_shifted_rows(%Tetris.Game{rows_removed: rows_removed} = game) do
     Enum.reduce(0..game.grid_col_max, game, fn x, game ->
-      game = %{game | height_per_col: Map.update(game.height_per_col, x, 0, &(&1 - rows_removed))}
+      game = update_height_per_col(game, x)
 
       Enum.reduce((game.grid_row_max - rows_removed + 1)..game.grid_row_max, game, fn y, game ->
         %{game | grid: Map.drop(game.grid, [{x, y}])}
@@ -147,4 +147,20 @@ defmodule Tetris.Main do
     |> Map.put(:grid_row_max, game.grid_row_max - rows_removed)
   end
 
+  defp update_height_per_col(game, x) do
+    height_per_col =
+      Enum.reduce_while(
+        (game.grid_row_max - game.rows_removed)..0,
+        %{game.height_per_col | x => 0},
+        fn y, height_per_col ->
+          if game.grid[{x, y}] do
+            {:halt, %{height_per_col | x => y + 1}}
+          else
+            {:cont, height_per_col}
+          end
+        end
+      )
+
+    %{game | height_per_col: height_per_col}
+  end
 end
