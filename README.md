@@ -1,5 +1,4 @@
 # Tetris
-Solution to the DRW trading coding challenge done in Elixir.
 
 Intended to be used from the command line, will read from stdin and output to stdout ex:
 
